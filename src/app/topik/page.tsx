@@ -1,11 +1,11 @@
-import { StudentDashboardView } from "@/components/student-dashboard-view";
+import { TopicCatalogView } from "@/components/topic-catalog-view";
 import { getStudentDashboardData } from "@/lib/student-dashboard";
 
-export default async function Home() {
+export default async function TopicsPage() {
   const dashboardData = await getStudentDashboardData();
 
   return (
-    <StudentDashboardView
+    <TopicCatalogView
       displayName="Adik"
       homeHref="/"
       dashboardData={dashboardData}

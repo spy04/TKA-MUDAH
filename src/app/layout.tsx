@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "mathlive/fonts.css";
+import "mathlive/static.css";
 
 export const metadata: Metadata = {
   title: "TKA Mudah LMS",

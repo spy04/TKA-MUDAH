@@ -1,14 +1,14 @@
 import { logoutAction } from "@/app/actions/auth";
-import { StudentDashboardView } from "@/components/student-dashboard-view";
+import { TopicCatalogView } from "@/components/topic-catalog-view";
 import { requireUserRole } from "@/lib/auth/session";
 import { getStudentDashboardData } from "@/lib/student-dashboard";
 
-export default async function StudentPage() {
+export default async function StudentTopicsPage() {
   const user = await requireUserRole("STUDENT");
   const dashboardData = await getStudentDashboardData();
 
   return (
-    <StudentDashboardView
+    <TopicCatalogView
       displayName={user.name?.trim() || "Adik"}
       homeHref="/siswa"
       dashboardData={dashboardData}
