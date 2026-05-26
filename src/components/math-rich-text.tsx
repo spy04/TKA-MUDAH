@@ -20,7 +20,7 @@ export function MathRichText({ text, className, inline = false }: MathRichTextPr
   }
 
   const markup = convertLatexToMarkup(text, {
-    defaultMode: inline ? "textstyle" : "displaystyle",
+    defaultMode: inline ? "inline-math" : "math",
   });
 
   return <Container className={className} dangerouslySetInnerHTML={{ __html: markup }} />;
