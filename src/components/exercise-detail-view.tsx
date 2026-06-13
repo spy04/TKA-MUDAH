@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 
 import { buildHeaderMenus, buildSidebarMenus } from "@/components/student-dashboard/data";
 import { ExercisePlayerClient } from "@/components/exercise-player-client";
@@ -25,12 +25,18 @@ export function ExerciseDetailView({
   const avatarText = displayName.charAt(0).toUpperCase();
   const exerciseHref = isEnrolled ? "/siswa/latihan" : "/latihan";
   const headerMenus = buildHeaderMenus(homeHref, "exercises", exerciseHref);
-  const sidebarMenus = buildSidebarMenus(homeHref, "topics");
+  const sidebarMenus = buildSidebarMenus(homeHref, "exercises");
   const totalQuestions = Math.max(exercise.questions.length, exercise.questionCount, 0);
+  const totalPoints = exercise.questions.reduce((sum, question) => sum + question.points, 0);
 
   return (
     <main className="min-h-screen bg-[#eaf1ff] text-[#1f2f46]">
-      <StudentNavbar avatarText={avatarText} homeHref={homeHref} menus={headerMenus} />
+      <StudentNavbar
+        avatarText={avatarText}
+        homeHref={homeHref}
+        menus={headerMenus}
+        isAuthenticated={isEnrolled}
+      />
 
       <div className="bg-[#f5f8ff]">
         <div className="mx-auto flex w-full max-w-[1440px] gap-6 px-4 py-6 lg:px-6">
@@ -54,6 +60,14 @@ export function ExerciseDetailView({
                 <p className="mt-2 text-[16px] font-medium text-[#596983]">
                   {totalQuestions > 0 ? `Soal 1 dari ${totalQuestions}` : "Soal belum tersedia"}
                 </p>
+                <p className="mt-2 text-[15px] font-medium text-[#596983]">
+                  {totalPoints > 0 ? `Total poin: ${totalPoints}` : "Poin belum diatur"}
+                </p>
+                {exercise.adminNotes?.trim() ? (
+                  <p className="mt-3 rounded-[16px] bg-white px-4 py-3 text-[14px] leading-7 text-[#596983]">
+                    Catatan latihan: {exercise.adminNotes}
+                  </p>
+                ) : null}
                 {exercise.title !== exercise.topic.title ? (
                   <p className="mt-3 text-[15px] leading-7 text-[#596983]">
                     Paket latihan: {exercise.title}
@@ -74,3 +88,4 @@ export function ExerciseDetailView({
     </main>
   );
 }
+

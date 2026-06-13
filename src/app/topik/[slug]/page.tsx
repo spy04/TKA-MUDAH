@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 
-import { TopicDetailView } from "@/components/topic-detail-view";
+import { PublicTopicDetailView } from "@/components/public-topic-detail-view";
 import { getPublicTopicDetail } from "@/lib/public-content";
 
 type TopicDetailPageProps = {
@@ -15,5 +15,5 @@ export default async function TopicDetailPage({ params }: TopicDetailPageProps) 
     notFound();
   }
 
-  return <TopicDetailView topic={topic} displayName="Adik" homeHref="/" />;
+  return <PublicTopicDetailView topic={topic} />;
 }

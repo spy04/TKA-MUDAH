@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { logoutAction } from "@/app/actions/auth";
-import { TopicDetailView } from "@/components/topic-detail-view";
+import { StudentTopicDetailView } from "@/components/student-topic-detail-view";
 import { requireUserRole } from "@/lib/auth/session";
 import { getPublicTopicDetail } from "@/lib/public-content";
 
@@ -19,11 +19,9 @@ export default async function StudentTopicDetailPage({ params }: StudentTopicDet
   }
 
   return (
-    <TopicDetailView
+    <StudentTopicDetailView
       topic={topic}
       displayName={user.name?.trim() || "Adik"}
-      homeHref="/siswa"
-      isEnrolled
       logoutAction={logoutAction}
     />
   );

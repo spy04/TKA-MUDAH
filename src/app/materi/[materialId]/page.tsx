@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 
-import { MaterialDetailView } from "@/components/material-detail-view";
+import { PublicMaterialDetailView } from "@/components/public-material-detail-view";
 import { getPublicMaterialDetail } from "@/lib/public-content";
 
 type MaterialDetailPageProps = {
@@ -15,5 +15,5 @@ export default async function MaterialDetailPage({ params }: MaterialDetailPageP
     notFound();
   }
 
-  return <MaterialDetailView material={material} />;
+  return <PublicMaterialDetailView material={material} />;
 }

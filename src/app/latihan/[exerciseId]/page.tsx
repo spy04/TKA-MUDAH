@@ -1,7 +1,4 @@
-import { notFound } from "next/navigation";
-
-import { ExerciseDetailView } from "@/components/exercise-detail-view";
-import { getPublicExerciseDetail } from "@/lib/public-content";
+import { redirect } from "next/navigation";
 
 type ExerciseDetailPageProps = {
   params: Promise<{ exerciseId: string }>;
@@ -9,11 +6,5 @@ type ExerciseDetailPageProps = {
 
 export default async function ExerciseDetailPage({ params }: ExerciseDetailPageProps) {
   const { exerciseId } = await params;
-  const exercise = await getPublicExerciseDetail(exerciseId);
-
-  if (!exercise) {
-    notFound();
-  }
-
-  return <ExerciseDetailView exercise={exercise} />;
+  redirect(`/masuk?callbackUrl=${encodeURIComponent(`/siswa/latihan/${exerciseId}`)}`);
 }

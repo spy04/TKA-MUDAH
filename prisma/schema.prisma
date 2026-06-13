@@ -95,6 +95,7 @@ model Exercise {
   materialId    String?
   material      Material?   @relation(fields: [materialId], references: [id], onDelete: SetNull)
   questions     Question[]
+  attempts      ExerciseAttempt[]
 
   @@index([topicId])
   @@index([materialId])
@@ -108,15 +109,18 @@ model Question {
   optionB        String?      @db.Text
   optionC        String?      @db.Text
   optionD        String?      @db.Text
+  optionE        String?      @db.Text
   correctAnswer  AnswerKey?
   correctAnswers String?      @db.Text
   sampleAnswer   String?      @db.Text
   explanation    String?      @db.Text
+  points         Int          @default(10)
   orderNumber    Int
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
   exerciseId     String
   exercise       Exercise     @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  attemptAnswers ExerciseAttemptAnswer[]
 
   @@index([exerciseId])
   @@unique([exerciseId, orderNumber])
@@ -132,6 +136,7 @@ model User {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
   sessions     Session[]
+  exerciseAttempts ExerciseAttempt[]
 }
 
 model Session {
@@ -144,4 +149,44 @@ model Session {
 
   @@index([userId])
   @@index([expiresAt])
+}
+
+model ExerciseAttempt {
+  id                 String                  @id @default(cuid())
+  score              Int                     @default(0)
+  maxScore           Int                     @default(0)
+  correctCount       Int                     @default(0)
+  incorrectCount     Int                     @default(0)
+  unansweredCount    Int                     @default(0)
+  essayCount         Int                     @default(0)
+  answeredCount      Int                     @default(0)
+  totalQuestions     Int                     @default(0)
+  submittedAt        DateTime                @default(now())
+  createdAt          DateTime                @default(now())
+  updatedAt          DateTime                @updatedAt
+  exerciseId         String
+  userId             String
+  exercise           Exercise                @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  user               User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  answers            ExerciseAttemptAnswer[]
+
+  @@index([exerciseId, submittedAt])
+  @@index([userId, submittedAt])
+}
+
+model ExerciseAttemptAnswer {
+  id              String           @id @default(cuid())
+  selectedOptions String?          @db.Text
+  essayAnswer     String?          @db.Text
+  isCorrect       Boolean?
+  awardedPoints   Int              @default(0)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  attemptId       String
+  questionId      String
+  attempt         ExerciseAttempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question        Question         @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([attemptId, questionId])
+  @@index([questionId])
 }

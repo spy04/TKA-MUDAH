@@ -1,8 +1,9 @@
 import { notFound } from "next/navigation";
 
 import { logoutAction } from "@/app/actions/auth";
-import { ExerciseDetailView } from "@/components/exercise-detail-view";
+import { StudentExercisePage } from "@/components/student-exercise-page";
 import { requireUserRole } from "@/lib/auth/session";
+import { getLatestExerciseAttemptForStudent } from "@/lib/exercise-attempts";
 import { getStudentExerciseDetail } from "@/lib/public-content";
 
 type StudentExerciseDetailPageProps = {
@@ -13,18 +14,18 @@ export default async function StudentExerciseDetailPage({ params }: StudentExerc
   const user = await requireUserRole("STUDENT");
   const { exerciseId } = await params;
   const exercise = await getStudentExerciseDetail(exerciseId);
+  const latestAttempt = await getLatestExerciseAttemptForStudent(exerciseId, user.id);
 
   if (!exercise) {
     notFound();
   }
 
   return (
-    <ExerciseDetailView
+    <StudentExercisePage
       exercise={exercise}
       logoutAction={logoutAction}
-      homeHref="/siswa"
       displayName={user.name?.trim() || "Adik"}
-      isEnrolled
+      latestAttempt={latestAttempt}
     />
   );
 }

@@ -1,5 +1,5 @@
 import { logoutAction } from "@/app/actions/auth";
-import { StudentDashboardView } from "@/components/student-dashboard-view";
+import { StudentHomeDashboard } from "@/components/student-home-dashboard";
 import { requireUserRole } from "@/lib/auth/session";
 import { getStudentDashboardData } from "@/lib/student-dashboard";
 
@@ -8,11 +8,9 @@ export default async function StudentPage() {
   const dashboardData = await getStudentDashboardData();
 
   return (
-    <StudentDashboardView
+    <StudentHomeDashboard
       displayName={user.name?.trim() || "Adik"}
-      homeHref="/siswa"
       dashboardData={dashboardData}
-      isEnrolled
       logoutAction={logoutAction}
     />
   );

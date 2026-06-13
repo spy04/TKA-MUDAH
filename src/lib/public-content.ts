@@ -53,12 +53,16 @@ export type PublicMaterialDetail = {
 export type PublicExerciseQuestion = {
   id: string;
   orderNumber: number;
+  points: number;
   questionType: "SINGLE_CHOICE" | "MULTIPLE_CHOICE" | "ESSAY";
   prompt: string;
   optionA: string | null;
   optionB: string | null;
   optionC: string | null;
   optionD: string | null;
+  optionE: string | null;
+  correctAnswer: "A" | "B" | "C" | "D" | "E" | null;
+  correctAnswers: string | null;
   explanation: string | null;
   sampleAnswer: string | null;
 };
@@ -281,12 +285,16 @@ async function getExerciseDetailInternal(
         select: {
           id: true,
           orderNumber: true,
+          points: true,
           questionType: true,
           prompt: true,
           optionA: true,
           optionB: true,
           optionC: true,
           optionD: true,
+          optionE: true,
+          correctAnswer: true,
+          correctAnswers: true,
           explanation: true,
           sampleAnswer: true,
         },
@@ -315,7 +323,7 @@ export const getPublicExerciseDetail = cache(async (exerciseId: string): Promise
 });
 
 export const getStudentExerciseDetail = cache(async (exerciseId: string): Promise<PublicExerciseDetail | null> => {
-  return getExerciseDetailInternal(exerciseId, ["PREVIEW", "ENROLLED"]);
+  return getExerciseDetailInternal(exerciseId, ["PREVIEW"]);
 });
 
 async function getFirstExerciseIdInternal(
@@ -355,5 +363,5 @@ export const getFirstPublicExerciseId = cache(async () => {
 });
 
 export const getFirstStudentExerciseId = cache(async () => {
-  return getFirstExerciseIdInternal(["PREVIEW", "ENROLLED"]);
+  return getFirstExerciseIdInternal(["PREVIEW"]);
 });

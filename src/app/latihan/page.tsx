@@ -1,13 +1,13 @@
 import { redirect } from "next/navigation";
 
-import { getFirstPublicExerciseId } from "@/lib/public-content";
+import { getFirstStudentExerciseId } from "@/lib/public-content";
 
 export default async function LatihanLandingPage() {
-  const exerciseId = await getFirstPublicExerciseId();
+  const exerciseId = await getFirstStudentExerciseId();
 
   if (!exerciseId) {
-    redirect("/topik");
+    redirect("/masuk");
   }
 
-  redirect(`/latihan/${exerciseId}`);
+  redirect(`/masuk?callbackUrl=${encodeURIComponent(`/siswa/latihan/${exerciseId}`)}`);
 }

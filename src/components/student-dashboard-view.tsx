@@ -37,7 +37,12 @@ export function StudentDashboardView({
   return (
     <main className="min-h-screen bg-[#eaf1ff] text-[#1f2f46]">
       <div className="min-h-screen">
-        <StudentNavbar avatarText={avatarText} homeHref={homeHref} menus={headerMenus} />
+        <StudentNavbar
+          avatarText={avatarText}
+          homeHref={homeHref}
+          menus={headerMenus}
+          isAuthenticated={isEnrolled}
+        />
 
         <div className="bg-[#f5f8ff]">
           <div className="mx-auto flex w-full max-w-[1440px] gap-6 px-4 py-6 lg:px-6">
@@ -67,16 +72,16 @@ export function StudentDashboardView({
 
                   <div className="mt-8 flex flex-wrap gap-4">
                     <Link
-                      href={topicHref}
+                      href={isEnrolled ? topicHref : "/daftar"}
                       className="flex h-[44px] items-center justify-center rounded-[12px] bg-[#2563eb] px-8 text-[14px] font-bold text-white shadow-[0_20px_28px_-24px_rgba(37,99,235,0.9)]"
                     >
-                      {isEnrolled ? "Lanjut Belajar" : "Mulai Belajar"}
+                      {isEnrolled ? "Lanjut Belajar" : "Daftar Sekarang"}
                     </Link>
                     <Link
-                      href={isEnrolled ? "#latihan" : "/siswa"}
+                      href={isEnrolled ? "#latihan" : "/masuk"}
                       className="flex h-[44px] items-center justify-center rounded-[12px] border-2 border-[#2563eb] px-8 text-[14px] font-bold text-[#2563eb]"
                     >
-                      {isEnrolled ? "Coba Latihan" : "Daftar untuk Enrolled"}
+                      {isEnrolled ? "Coba Latihan" : "Sudah Punya Akun"}
                     </Link>
                   </div>
                 </div>
