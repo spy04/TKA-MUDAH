@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Bell, CircleHelp, Search } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 type StudentTopbarProps = {
@@ -29,21 +30,25 @@ export function StudentTopbar({
             />
           </div>
 
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="icon-lg"
             aria-label="Notifikasi"
-            className="flex size-9 items-center justify-center rounded-full text-[#5f6d83] transition hover:bg-[#eff4ff]"
+            className="rounded-full text-[#5f6d83] hover:bg-[#eff4ff]"
           >
             <Bell className="size-4" />
-          </button>
+          </Button>
 
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="icon-lg"
             aria-label="Bantuan"
-            className="flex size-9 items-center justify-center rounded-full text-[#5f6d83] transition hover:bg-[#eff4ff]"
+            className="rounded-full text-[#5f6d83] hover:bg-[#eff4ff]"
           >
             <CircleHelp className="size-4" />
-          </button>
+          </Button>
 
           <div className="ml-1 rounded-full border border-[#dce5f4] bg-white p-[2px] shadow-sm">
             <div className="flex size-9 items-center justify-center rounded-full bg-[linear-gradient(180deg,#3b82f6_0%,#1d4ed8_100%)] text-[13px] font-bold text-white">

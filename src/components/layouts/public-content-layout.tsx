@@ -14,10 +14,10 @@ export function PublicContentLayout({
   menus,
 }: PublicContentLayoutProps) {
   return (
-    <main className="min-h-screen bg-[#eaf1ff] text-[#1f2f46]">
+    <main className="min-h-screen bg-[linear-gradient(180deg,#eaf1ff_0%,#f7faff_100%)] text-[#1f2f46]">
       <PublicTopNavbar homeHref={homeHref} menus={menus} />
 
-      <div className="bg-[#f5f8ff]">
+      <div className="bg-transparent">
         <div className="mx-auto w-full max-w-[1440px] px-4 py-6 lg:px-6">
           {children}
           <div className="min-h-[220px]" />

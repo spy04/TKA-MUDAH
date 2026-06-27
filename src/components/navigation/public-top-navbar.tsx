@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { NavItem } from "@/components/student-dashboard/data";
 
@@ -14,7 +15,7 @@ export function PublicTopNavbar({
 }: PublicTopNavbarProps) {
   return (
     <header className="sticky top-0 z-30 border-b border-[#d8e2f3]/80 bg-white/92 backdrop-blur">
-      <div className="mx-auto flex h-[68px] w-full max-w-[1440px] items-center justify-between px-5 lg:px-6">
+      <div className="mx-auto flex h-[72px] w-full max-w-[1440px] items-center justify-between gap-4 px-5 lg:px-6">
         <div className="flex items-center gap-8">
           <Link href={homeHref} className="text-[18px] font-black tracking-tight text-[#2563eb]">
             TKAMUDAH
@@ -40,18 +41,27 @@ export function PublicTopNavbar({
         </div>
 
         <div className="flex items-center gap-3">
-          <Link
-            href="/masuk"
-            className="rounded-full px-4 py-2 text-[14px] font-semibold text-[#2563eb] transition hover:bg-[#eef3ff]"
+          <Button
+            render={
+              <Link href="/masuk" />
+            }
+            nativeButton={false}
+            variant="ghost"
+            size="lg"
+            className="rounded-full px-4 text-[14px] font-semibold text-[#2563eb] hover:bg-[#eef3ff] hover:text-[#1f58da]"
           >
             Masuk
-          </Link>
-          <Link
-            href="/daftar"
-            className="rounded-full bg-[#2563eb] px-5 py-2.5 text-[14px] font-bold text-white shadow-[0_18px_28px_-22px_rgba(37,99,235,0.9)] transition hover:bg-[#1f58da]"
+          </Button>
+          <Button
+            render={
+              <Link href="/daftar" />
+            }
+            nativeButton={false}
+            size="lg"
+            className="rounded-full bg-[#2563eb] px-5 text-[14px] font-bold text-white shadow-[0_18px_28px_-22px_rgba(37,99,235,0.9)] hover:bg-[#1f58da]"
           >
             Daftar
-          </Link>
+          </Button>
         </div>
       </div>
     </header>

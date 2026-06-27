@@ -1,16 +1,17 @@
-import { redirect } from "next/navigation";
-
 import { requireUserRole } from "@/lib/auth/session";
-import { getFirstStudentExerciseId } from "@/lib/public-content";
+import { logoutAction } from "@/app/actions/auth";
+import { StudentExerciseCategoryListView } from "@/components/student-exercise-category-list-view";
+import { getPublicExerciseCategories } from "@/lib/public-content";
 
 export default async function StudentLatihanLandingPage() {
-  await requireUserRole("STUDENT");
+  const user = await requireUserRole("STUDENT");
+  const categories = await getPublicExerciseCategories();
 
-  const exerciseId = await getFirstStudentExerciseId();
-
-  if (!exerciseId) {
-    redirect("/siswa/topik");
-  }
-
-  redirect(`/siswa/latihan/${exerciseId}`);
+  return (
+    <StudentExerciseCategoryListView
+      categories={categories}
+      displayName={user.name?.trim() || "Adik"}
+      logoutAction={logoutAction}
+    />
+  );
 }

@@ -5,7 +5,7 @@ import { getStudentDashboardData } from "@/lib/student-dashboard";
 
 export default async function StudentPage() {
   const user = await requireUserRole("STUDENT");
-  const dashboardData = await getStudentDashboardData();
+  const dashboardData = await getStudentDashboardData(user.id);
 
   return (
     <StudentHomeDashboard

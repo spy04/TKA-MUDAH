@@ -1,9 +1,12 @@
 import Link from "next/link";
-import { ClipboardCheck, GraduationCap, Star, Trophy } from "lucide-react";
+import { BookOpen, ClipboardCheck, GraduationCap, Star, Trophy } from "lucide-react";
 
 import { StudentAppLayout } from "@/components/layouts/student-app-layout";
-import type { SidebarItem } from "@/components/student-dashboard/data";
-import type { StudentDashboardData } from "@/lib/student-dashboard";
+import { buildSidebarMenus } from "@/components/student-dashboard/data";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import type { DashboardRecentActivity, StudentDashboardData } from "@/lib/student-dashboard";
 import { cn } from "@/lib/utils";
 
 type StudentHomeDashboardProps = {
@@ -21,143 +24,152 @@ type ProgressItem = {
   href: string;
 };
 
-type ActivityItem = {
+type RecommendationCard = {
   title: string;
-  meta: string;
-  caption: string;
-  accent: "blue" | "green" | "amber";
+  description: string;
+  buttonLabel: string;
+  href: string;
+  accent: "blue" | "green";
 };
-
-const sidebarMenus: SidebarItem[] = [
-  { label: "Home", href: "/siswa", icon: GraduationCap, active: true },
-  { label: "Materi Saya", href: "/siswa/topik", icon: GraduationCap, active: false },
-  { label: "Tryout", href: "/siswa/latihan", icon: ClipboardCheck, active: false },
-  { label: "Statistik", href: "#statistik", icon: Star, active: false },
-  { label: "Pengaturan", href: "#pengaturan", icon: Trophy, active: false },
-];
-
-const statCards = [
-  { label: "Skor Rata-rata", value: "88.5", icon: Star, accent: "blue" },
-  { label: "Materi Selesai", value: "24/30", icon: ClipboardCheck, accent: "green" },
-  { label: "Peringkat Sekolah", value: "12", icon: Trophy, accent: "amber" },
-] as const;
 
 function clampProgressFromWidth(width: string) {
   const numeric = Number.parseInt(width.replace("%", ""), 10);
   if (Number.isNaN(numeric)) {
-    return 42;
+    return 0;
   }
 
-  return Math.min(Math.max(numeric, 8), 100);
+  return Math.min(Math.max(numeric, 0), 100);
+}
+
+function formatRelativeTime(value: string) {
+  const target = new Date(value).getTime();
+  const now = Date.now();
+  const diffMs = target - now;
+  const diffMinutes = Math.round(diffMs / 60000);
+
+  const formatter = new Intl.RelativeTimeFormat("id-ID", { numeric: "auto" });
+
+  if (Math.abs(diffMinutes) < 60) {
+    return formatter.format(diffMinutes, "minute");
+  }
+
+  const diffHours = Math.round(diffMinutes / 60);
+  if (Math.abs(diffHours) < 24) {
+    return formatter.format(diffHours, "hour");
+  }
+
+  const diffDays = Math.round(diffHours / 24);
+  return formatter.format(diffDays, "day");
 }
 
 function createProgressItems(data: StudentDashboardData): ProgressItem[] {
-  const fromFavoriteTopics = data.favoriteTopics.slice(0, 2).map((topic, index) => ({
+  return data.favoriteTopics.slice(0, 3).map((topic, index) => ({
     title: topic.title,
-    subtitle: `Modul ${Math.max(topic.materialCount, 1)} • ${Math.max(topic.exerciseCount, 1)} latihan`,
+    subtitle: `${topic.materialCount} materi • ${topic.exerciseCount} latihan tersedia`,
     badge: topic.category,
     progress: clampProgressFromWidth(topic.progressWidth),
-    accent: index === 0 ? "blue" as const : "green" as const,
+    accent: index === 0 ? "blue" : "green",
     href: `/siswa/topik/${topic.slug}`,
   }));
-
-  if (fromFavoriteTopics.length > 0) {
-    return fromFavoriteTopics;
-  }
-
-  return [
-    {
-      title: "Matematika Dasar: Pecahan",
-      subtitle: "Modul 4 • Video belum ditonton",
-      badge: "Eksak",
-      progress: 75,
-      accent: "blue",
-      href: "/siswa/topik",
-    },
-    {
-      title: "Bahasa Indonesia: Ide Pokok",
-      subtitle: "Modul 2 • 5 latihan soal",
-      badge: "Literasi",
-      progress: 40,
-      accent: "green",
-      href: "/siswa/topik",
-    },
-  ];
 }
 
-function createActivityItems(data: StudentDashboardData): ActivityItem[] {
-  const topicItems = data.topics.slice(0, 3).map((topic, index) => ({
-    title:
-      index === 0
-        ? `Selesai latihan ${topic.title}`
-        : index === 1
-          ? `Mengikuti simulasi ${topic.title}`
-          : `Menonton materi ${topic.title}`,
-    meta:
-      index === 0
-        ? `Skor: ${Math.min(100, 70 + topic.exerciseCount * 5)}/100`
-        : index === 1
-          ? "Status: Menunggu hasil"
-          : `Durasi: ${Math.max(10, topic.materialCount * 12)} menit`,
-    caption:
-      index === 0
-        ? "2 jam yang lalu"
-        : index === 1
-          ? "Kemarin"
-          : "3 hari yang lalu",
-    accent: index === 0 ? "blue" as const : index === 1 ? "green" as const : "amber" as const,
+function createRecommendationCards(data: StudentDashboardData): RecommendationCard[] {
+  const topicRecommendations = data.favoriteTopics.slice(0, 2).map((topic, index) => ({
+    title: index === 0 ? `Lanjutkan topik ${topic.title}` : `Perdalam ${topic.title}`,
+    description: `Topik ini punya ${topic.materialCount} materi dan ${topic.exerciseCount} latihan yang siap kamu lanjutkan.`,
+    buttonLabel: index === 0 ? "Buka Topik" : "Mulai Belajar",
+    href: `/siswa/topik/${topic.slug}`,
+    accent: index === 0 ? "blue" as const : "green" as const,
   }));
 
-  if (topicItems.length > 0) {
-    return topicItems;
+  if (topicRecommendations.length > 0) {
+    return topicRecommendations;
   }
 
-  return [
-    {
-      title: "Selesai latihan pecahan",
-      meta: "Skor: 90/100",
-      caption: "2 jam yang lalu",
-      accent: "blue",
-    },
-    {
-      title: "Mengikuti simulasi TKA 1",
-      meta: "Status: Menunggu hasil",
-      caption: "Kemarin",
-      accent: "green",
-    },
-    {
-      title: "Menonton video logika",
-      meta: "Durasi: 15 menit",
-      caption: "3 hari yang lalu",
-      accent: "amber",
-    },
-  ];
+  return data.features.slice(0, 2).map((feature, index) => ({
+    title: feature.kind === "material" ? `Coba materi ${feature.title}` : `Kerjakan latihan ${feature.title}`,
+    description: feature.description,
+    buttonLabel: feature.kind === "material" ? "Lihat Materi" : "Buka Latihan",
+    href: feature.href,
+    accent: index === 0 ? "blue" as const : "green" as const,
+  }));
 }
 
-function createRecommendationCards(data: StudentDashboardData) {
-  const firstTopic = data.topics[0];
-  const secondTopic = data.topics[1];
+function StatCard({
+  label,
+  value,
+  helper,
+  icon: Icon,
+  accent,
+}: {
+  label: string;
+  value: string;
+  helper: string;
+  icon: typeof Star;
+  accent: "blue" | "green" | "amber";
+}) {
+  return (
+    <Card
+      className={cn(
+        "rounded-[18px] border bg-white py-0 shadow-[0_16px_24px_-24px_rgba(15,23,42,0.35)]",
+        accent === "blue" && "border-l-[4px] border-l-[#2563eb] border-[#dce5f4]",
+        accent === "green" && "border-l-[4px] border-l-[#0f8a63] border-[#dce5f4]",
+        accent === "amber" && "border-l-[4px] border-l-[#b7791f] border-[#dce5f4]",
+      )}
+    >
+      <CardContent className="px-5 py-4">
+        <div className="flex items-center gap-4">
+        <div
+          className={cn(
+            "flex size-12 items-center justify-center rounded-[12px]",
+            accent === "blue" && "bg-[#e9efff] text-[#2563eb]",
+            accent === "green" && "bg-[#e7f8f1] text-[#0f8a63]",
+            accent === "amber" && "bg-[#fff3df] text-[#b7791f]",
+          )}
+        >
+          <Icon className="size-5" />
+        </div>
 
-  return [
-    {
-      title: firstTopic ? `Pelajari lagi: ${firstTopic.title}` : "Pelajari lagi: Perbandingan",
-      description: firstTopic
-        ? `Fokuskan ulang ${firstTopic.category.toLowerCase()} supaya progresmu makin stabil minggu ini.`
-        : "Skormu di topik ini masih di bawah rata-rata. Yuk perkuat pemahamanmu.",
-      buttonLabel: "Mulai Belajar",
-      href: firstTopic ? `/siswa/topik/${firstTopic.slug}` : "/siswa/topik",
-      accent: "blue",
-    },
-    {
-      title: secondTopic ? `Latihan: ${secondTopic.title}` : "Latihan: Struktur Kalimat",
-      description: secondTopic
-        ? `Coba sesi latihan singkat untuk ${secondTopic.title.toLowerCase()} biar ritme belajarmu tetap terjaga.`
-        : "Kamu sering melewatkan soal jenis ini. Coba 10 soal latihan kilat.",
-      buttonLabel: "Coba Latihan",
-      href: secondTopic ? `/siswa/topik/${secondTopic.slug}` : "/siswa/latihan",
-      accent: "green",
-    },
-  ] as const;
+        <div>
+          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#73829b]">{label}</p>
+          <p
+            className={cn(
+              "mt-1 text-[18px] font-black",
+              accent === "blue" && "text-[#2563eb]",
+              accent === "green" && "text-[#0f8a63]",
+              accent === "amber" && "text-[#9a6700]",
+            )}
+          >
+            {value}
+          </p>
+          <p className="mt-1 text-[12px] text-[#73829b]">{helper}</p>
+        </div>
+      </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ActivityItemCard({ item }: { item: DashboardRecentActivity }) {
+  return (
+    <Link href={item.href} className="flex gap-3 rounded-[14px] px-1 py-1 transition hover:bg-[#f8fbff]">
+      <span
+        className={cn(
+          "mt-2 size-2.5 shrink-0 rounded-full",
+          item.accent === "blue" && "bg-[#2563eb]",
+          item.accent === "green" && "bg-[#0f8a63]",
+          item.accent === "amber" && "bg-[#b7791f]",
+        )}
+      />
+      <div>
+        <p className="text-[14px] font-bold text-[#1f2f46]">{item.title}</p>
+        <p className="mt-1 text-[12px] text-[#5f6d83]">{item.meta}</p>
+        <p className="mt-1 text-[11px] font-medium uppercase tracking-[0.06em] text-[#97a4ba]">
+          {formatRelativeTime(item.happenedAt)}
+        </p>
+      </div>
+    </Link>
+  );
 }
 
 export function StudentHomeDashboard({
@@ -166,229 +178,213 @@ export function StudentHomeDashboard({
   logoutAction,
 }: StudentHomeDashboardProps) {
   const progressItems = createProgressItems(dashboardData);
-  const activityItems = createActivityItems(dashboardData);
   const recommendationCards = createRecommendationCards(dashboardData);
 
   return (
     <StudentAppLayout
       displayName={displayName}
-      sidebarMenus={sidebarMenus}
+      sidebarMenus={buildSidebarMenus("/siswa", "dashboard")}
       logoutAction={logoutAction}
     >
       <section className="rounded-[28px] border border-[#dce5f4] bg-[#f8faff] px-5 py-5 shadow-[0_24px_40px_-34px_rgba(15,23,42,0.28)] sm:px-6 lg:px-7">
-        <h1 className="text-[28px] font-black tracking-tight text-[#1f2f46]">
-          Halo, {displayName}! <span className="inline-block">👋</span>
-        </h1>
+        <h1 className="text-[28px] font-black tracking-tight text-[#1f2f46]">Halo, {displayName}!</h1>
         <p className="mt-2 text-[16px] text-[#5f6d83]">
-          Siap belajar hari ini? Mari kita lanjutkan petualangan belajarmu!
+          Dashboard ini sekarang menampilkan ringkasan belajar dari data yang benar-benar tersedia.
         </p>
 
         <div className="mt-6 grid gap-4 lg:grid-cols-3">
-          {statCards.map(({ label, value, icon: Icon, accent }) => (
-            <div
-              key={label}
-              className={cn(
-                "rounded-[18px] border bg-white px-5 py-4 shadow-[0_16px_24px_-24px_rgba(15,23,42,0.35)]",
-                accent === "blue" && "border-l-[4px] border-l-[#2563eb] border-[#dce5f4]",
-                accent === "green" && "border-l-[4px] border-l-[#0f8a63] border-[#dce5f4]",
-                accent === "amber" && "border-l-[4px] border-l-[#b7791f] border-[#dce5f4]",
-              )}
-            >
-              <div className="flex items-center gap-4">
-                <div
-                  className={cn(
-                    "flex size-12 items-center justify-center rounded-[12px]",
-                    accent === "blue" && "bg-[#e9efff] text-[#2563eb]",
-                    accent === "green" && "bg-[#e7f8f1] text-[#0f8a63]",
-                    accent === "amber" && "bg-[#fff3df] text-[#b7791f]",
-                  )}
-                >
-                  <Icon className="size-5" />
-                </div>
-
-                <div>
-                  <p className="text-[11px] font-bold tracking-[0.12em] text-[#73829b] uppercase">
-                    {label}
-                  </p>
-                  <p
-                    className={cn(
-                      "mt-1 text-[18px] font-black",
-                      accent === "blue" && "text-[#2563eb]",
-                      accent === "green" && "text-[#0f8a63]",
-                      accent === "amber" && "text-[#9a6700]",
-                    )}
-                  >
-                    {value}
-                  </p>
-                </div>
-              </div>
-            </div>
-          ))}
+          <StatCard
+            label="Rata-rata Latihan"
+            value={dashboardData.stats.averageScore !== null ? `${dashboardData.stats.averageScore}%` : "-"}
+            helper={`${dashboardData.stats.attemptCount} attempt tercatat`}
+            icon={Star}
+            accent="blue"
+          />
+          <StatCard
+            label="Materi Tersedia"
+            value={String(dashboardData.stats.materialCount)}
+            helper={`${dashboardData.stats.topicCount} topik aktif`}
+            icon={BookOpen}
+            accent="green"
+          />
+          <StatCard
+            label="Latihan Tersedia"
+            value={String(dashboardData.stats.exerciseCount)}
+            helper={`${dashboardData.stats.categoryCount} kategori aktif`}
+            icon={Trophy}
+            accent="amber"
+          />
         </div>
 
-        <div className="mt-6 grid gap-5 xl:grid-cols-[minmax(0,1fr)_300px]">
+        <div className="mt-6 grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
           <section className="rounded-[22px] bg-transparent">
             <div className="flex items-center justify-between gap-4">
               <h2 className="text-[20px] font-black text-[#1f2f46]">Progres Belajar</h2>
-              <Link href="/siswa/topik" className="text-[14px] font-bold text-[#2563eb]">
+              <Button
+                render={<Link href="/siswa/topik" />}
+                nativeButton={false}
+                variant="link"
+                className="h-auto px-0 text-[14px] font-bold text-[#2563eb]"
+              >
                 Lihat Semua
-              </Link>
+              </Button>
             </div>
 
-            <div className="mt-3 space-y-4">
-              {progressItems.map((item) => (
-                <div
-                  key={item.title}
-                  className={cn(
-                    "rounded-[18px] border bg-white px-4 py-4 shadow-[0_16px_24px_-24px_rgba(15,23,42,0.35)]",
-                    item.accent === "blue" ? "border-t-[3px] border-t-[#2563eb] border-[#dce5f4]" : "border-t-[3px] border-t-[#0f8a63] border-[#dce5f4]",
-                  )}
-                >
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <p className="text-[15px] font-bold text-[#1f2f46]">{item.title}</p>
-                      <p className="mt-1 text-[12px] text-[#73829b]">{item.subtitle}</p>
+            {progressItems.length > 0 ? (
+              <div className="mt-3 space-y-4">
+                {progressItems.map((item) => (
+                  <Card
+                    key={item.title}
+                    className={cn(
+                      "rounded-[18px] border bg-white py-0 shadow-[0_16px_24px_-24px_rgba(15,23,42,0.35)]",
+                      item.accent === "blue"
+                        ? "border-t-[3px] border-t-[#2563eb] border-[#dce5f4]"
+                        : "border-t-[3px] border-t-[#0f8a63] border-[#dce5f4]",
+                    )}
+                  >
+                    <CardContent className="px-4 py-4">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <p className="text-[15px] font-bold text-[#1f2f46]">{item.title}</p>
+                        <p className="mt-1 text-[12px] text-[#73829b]">{item.subtitle}</p>
+                      </div>
+                      <Badge
+                        className={cn(
+                          "rounded-full px-3 py-1 text-[12px] font-bold",
+                          item.accent === "blue"
+                            ? "bg-[#ecefff] text-[#4752a7]"
+                            : "bg-[#dff8ee] text-[#0f8a63]",
+                        )}
+                      >
+                        {item.badge}
+                      </Badge>
                     </div>
-                    <span
-                      className={cn(
-                        "rounded-full px-3 py-1 text-[12px] font-bold",
-                        item.accent === "blue" ? "bg-[#ecefff] text-[#4752a7]" : "bg-[#dff8ee] text-[#0f8a63]",
-                      )}
-                    >
-                      {item.badge}
-                    </span>
-                  </div>
 
-                  <div className="mt-4 h-[7px] rounded-full bg-[#e4ebf7]">
-                    <div
-                      className={cn(
-                        "h-full rounded-full",
-                        item.accent === "blue" ? "bg-[#2563eb]" : "bg-[#0f8a63]",
-                      )}
-                      style={{ width: `${item.progress}%` }}
-                    />
-                  </div>
+                    <div className="mt-4 h-[7px] rounded-full bg-[#e4ebf7]">
+                      <div
+                        className={cn(
+                          "h-full rounded-full",
+                          item.accent === "blue" ? "bg-[#2563eb]" : "bg-[#0f8a63]",
+                        )}
+                        style={{ width: `${item.progress}%` }}
+                      />
+                    </div>
 
-                  <div className="mt-4 flex items-center justify-between gap-3">
-                    <p
-                      className={cn(
-                        "text-[13px] font-bold",
-                        item.accent === "blue" ? "text-[#2563eb]" : "text-[#0f8a63]",
-                      )}
-                    >
-                      {item.progress}% Selesai
-                    </p>
-                    <Link
-                      href={item.href}
-                      className={cn(
-                        "inline-flex h-[38px] items-center justify-center rounded-[10px] px-5 text-[14px] font-bold text-white",
-                        item.accent === "blue" ? "bg-[#2563eb]" : "bg-[#0f8a63]",
-                      )}
-                    >
-                      Lanjutkan
-                    </Link>
-                  </div>
-                </div>
-              ))}
-            </div>
+                    <div className="mt-4 flex items-center justify-between gap-3">
+                      <p
+                        className={cn(
+                          "text-[13px] font-bold",
+                          item.accent === "blue" ? "text-[#2563eb]" : "text-[#0f8a63]",
+                        )}
+                        >
+                          {item.progress}% kepadatan konten
+                        </p>
+                      <Button
+                        render={<Link href={item.href} />}
+                        nativeButton={false}
+                        className={cn(
+                          "h-[38px] rounded-[10px] px-5 text-[14px] font-bold text-white",
+                          item.accent === "blue"
+                            ? "bg-[#2563eb] hover:bg-[#1f58da]"
+                            : "bg-[#0f8a63] hover:bg-[#0b6f50]",
+                        )}
+                      >
+                        Lanjutkan
+                      </Button>
+                    </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <Card className="mt-3 rounded-[18px] border-dashed border-[#dce5f4] bg-white py-0">
+                <CardContent className="px-5 py-6 text-[14px] leading-7 text-[#73829b]">
+                Belum ada topik aktif yang bisa ditampilkan di dashboard.
+                </CardContent>
+              </Card>
+            )}
           </section>
 
-          <aside className="rounded-[18px] border border-[#dce5f4] bg-white px-4 py-4 shadow-[0_16px_24px_-24px_rgba(15,23,42,0.35)]">
+          <Card className="rounded-[18px] border-[#dce5f4] bg-white py-0 shadow-[0_16px_24px_-24px_rgba(15,23,42,0.35)]">
+            <CardContent className="px-4 py-4">
             <h2 className="text-[20px] font-black text-[#1f2f46]">Aktivitas Terakhir</h2>
 
-            <div className="mt-5 space-y-5">
-              {activityItems.map((item) => (
-                <div key={item.title} className="flex gap-3">
-                  <span
-                    className={cn(
-                      "mt-2 size-2.5 shrink-0 rounded-full",
-                      item.accent === "blue" && "bg-[#2563eb]",
-                      item.accent === "green" && "bg-[#0f8a63]",
-                      item.accent === "amber" && "bg-[#b7791f]",
-                    )}
-                  />
-                  <div>
-                    <p className="text-[14px] font-bold text-[#1f2f46]">{item.title}</p>
-                    <p className="mt-1 text-[12px] text-[#5f6d83]">{item.meta}</p>
-                    <p className="mt-1 text-[11px] font-medium uppercase tracking-[0.06em] text-[#97a4ba]">
-                      {item.caption}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
+            {dashboardData.recentActivities.length > 0 ? (
+              <div className="mt-5 space-y-4">
+                {dashboardData.recentActivities.map((item) => (
+                  <ActivityItemCard key={item.id} item={item} />
+                ))}
+              </div>
+            ) : (
+              <div className="mt-5 rounded-[14px] bg-[#f8fbff] px-4 py-4 text-[13px] leading-6 text-[#73829b]">
+                Belum ada riwayat latihan dari akun ini.
+              </div>
+            )}
 
-            <Link
-              href="/siswa/latihan"
-              className="mt-6 inline-flex h-[42px] w-full items-center justify-center rounded-[12px] border border-[#cfd8ea] text-[14px] font-semibold text-[#43536d] transition hover:bg-[#f7f9ff]"
+            <Button
+              render={<Link href="/siswa/latihan" />}
+              nativeButton={false}
+              variant="outline"
+              size="lg"
+              className="mt-6 h-[42px] w-full rounded-[12px] border-[#cfd8ea] text-[14px] font-semibold text-[#43536d] hover:bg-[#f7f9ff]"
             >
-              Riwayat Lengkap
-            </Link>
-          </aside>
+              Buka Semua Latihan
+            </Button>
+            </CardContent>
+          </Card>
         </div>
 
         <section className="mt-8">
           <h2 className="text-[20px] font-black text-[#1f2f46]">Rekomendasi Untukmu</h2>
           <p className="mt-1 text-[13px] text-[#73829b]">
-            Berdasarkan progres belajar dan topik yang paling sering kamu buka.
+            Rekomendasi ini diambil dari topik dan konten yang benar-benar tersedia di sistem.
           </p>
 
-          <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_240px]">
-            {recommendationCards.map((card) => (
-              <div
-                key={card.title}
-                className="rounded-[20px] border border-[#dce5f4] bg-[#eaf1ff] px-5 py-5 shadow-[0_16px_24px_-24px_rgba(15,23,42,0.3)]"
-              >
-                <div
-                  className={cn(
-                    "flex size-12 items-center justify-center rounded-full bg-white",
-                    card.accent === "blue" ? "text-[#2563eb]" : "text-[#0f8a63]",
-                  )}
+          {recommendationCards.length > 0 ? (
+            <div className="mt-4 grid gap-4 xl:grid-cols-2">
+              {recommendationCards.map((card) => (
+                <Card
+                  key={card.title}
+                  className="rounded-[20px] border border-[#dce5f4] bg-[#eaf1ff] py-0 shadow-[0_16px_24px_-24px_rgba(15,23,42,0.3)]"
                 >
-                  {card.accent === "blue" ? (
-                    <GraduationCap className="size-5" />
-                  ) : (
-                    <ClipboardCheck className="size-5" />
-                  )}
-                </div>
-                <p className="mt-6 text-[18px] font-bold text-[#1f2f46]">{card.title}</p>
-                <p className="mt-3 text-[13px] leading-6 text-[#596983]">{card.description}</p>
-                <Link
-                  href={card.href}
-                  className={cn(
-                    "mt-6 inline-flex h-[40px] items-center justify-center rounded-full px-6 text-[14px] font-bold text-white",
-                    card.accent === "blue" ? "bg-[#2563eb]" : "bg-[#0f8a63]",
-                  )}
-                >
-                  {card.buttonLabel}
-                </Link>
-              </div>
-            ))}
-
-            <div className="relative overflow-hidden rounded-[20px] bg-[linear-gradient(180deg,#1c4ed8_0%,#1737af_100%)] px-5 py-5 text-white shadow-[0_20px_30px_-24px_rgba(23,55,175,0.92)]">
-              <div className="absolute -right-8 top-5 h-28 w-28 rounded-full bg-white/10 blur-xl" />
-              <div className="absolute bottom-4 left-4 h-20 w-20 rounded-full bg-white/8 blur-lg" />
-              <p className="relative z-10 text-[18px] font-bold">Grup Belajar</p>
-              <p className="relative z-10 mt-3 text-[13px] leading-6 text-white/84">
-                Belajar bareng teman-teman Indonesia biar makin seru dan terarah.
-              </p>
-              <div className="relative z-10 mt-8 flex -space-x-3">
-                {["S", "N", "A"].map((label, index) => (
-                  <span
-                    key={label}
+                  <CardContent className="px-5 py-5">
+                  <div
                     className={cn(
-                      "flex size-11 items-center justify-center rounded-full border-2 border-[#1c4ed8] text-[16px] font-black",
-                      index === 0 && "bg-[#6478ff]",
-                      index === 1 && "bg-[#8b5cf6]",
-                      index === 2 && "bg-[#0ea5a7]",
+                      "flex size-12 items-center justify-center rounded-full bg-white",
+                      card.accent === "blue" ? "text-[#2563eb]" : "text-[#0f8a63]",
                     )}
                   >
-                    {label}
-                  </span>
-                ))}
-              </div>
+                    {card.accent === "blue" ? (
+                      <GraduationCap className="size-5" />
+                    ) : (
+                      <ClipboardCheck className="size-5" />
+                    )}
+                  </div>
+                  <p className="mt-6 text-[18px] font-bold text-[#1f2f46]">{card.title}</p>
+                  <p className="mt-3 text-[13px] leading-6 text-[#596983]">{card.description}</p>
+                  <Button
+                    render={<Link href={card.href} />}
+                    nativeButton={false}
+                    className={cn(
+                      "mt-6 h-[40px] rounded-full px-6 text-[14px] font-bold text-white",
+                      card.accent === "blue"
+                        ? "bg-[#2563eb] hover:bg-[#1f58da]"
+                        : "bg-[#0f8a63] hover:bg-[#0b6f50]",
+                    )}
+                  >
+                    {card.buttonLabel}
+                  </Button>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
-          </div>
+          ) : (
+            <Card className="mt-4 rounded-[18px] border-dashed border-[#dce5f4] bg-white py-0">
+              <CardContent className="px-5 py-6 text-[14px] leading-7 text-[#73829b]">
+              Rekomendasi akan muncul setelah sistem menemukan topik atau latihan yang relevan.
+              </CardContent>
+            </Card>
+          )}
         </section>
       </section>
     </StudentAppLayout>

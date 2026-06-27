@@ -24,6 +24,57 @@ function buildOptions(question: PublicExerciseDetail["questions"][number]) {
   ].filter((option): option is { key: "A" | "B" | "C" | "D" | "E"; text: string } => Boolean(option.text?.trim()));
 }
 
+function buildTrueFalseStatements(question: PublicExerciseDetail["questions"][number]) {
+  return [
+    { key: "A", text: question.optionA },
+    { key: "B", text: question.optionB },
+    { key: "C", text: question.optionC },
+    { key: "D", text: question.optionD },
+    { key: "E", text: question.optionE },
+  ].filter((statement): statement is { key: "A" | "B" | "C" | "D" | "E"; text: string } => Boolean(statement.text?.trim()));
+}
+
+function parseTrueFalseSelection(values: string[]) {
+  const selections: Record<string, boolean> = {};
+
+  for (const rawValue of values) {
+    const value = rawValue.trim().toUpperCase();
+
+    if (!value) {
+      continue;
+    }
+
+    if (value.includes(":")) {
+      const [key, decision] = value.split(":");
+
+      if (!key) {
+        continue;
+      }
+
+      selections[key] = decision === "TRUE";
+      continue;
+    }
+
+    selections[value] = true;
+  }
+
+  return selections;
+}
+
+function buildTrueFalseSelectionValues(
+  currentValues: string[],
+  statementKey: string,
+  decision: boolean,
+  statementKeys: string[],
+) {
+  const selections = parseTrueFalseSelection(currentValues);
+  selections[statementKey] = decision;
+
+  return statementKeys
+    .filter((key) => key in selections)
+    .map((key) => `${key}:${selections[key] ? "TRUE" : "FALSE"}`);
+}
+
 function buildAnswerKeySummary(question: PublicExerciseDetail["questions"][number]) {
   if (question.questionType === "ESSAY") {
     return question.sampleAnswer?.trim()
@@ -31,9 +82,11 @@ function buildAnswerKeySummary(question: PublicExerciseDetail["questions"][numbe
       : null;
   }
 
-  if (question.questionType === "MULTIPLE_CHOICE") {
+  if (question.questionType === "MULTIPLE_CHOICE" || question.questionType === "TRUE_FALSE") {
     return question.correctAnswers?.trim()
-      ? `Kunci jawaban: ${question.correctAnswers}`
+      ? question.questionType === "TRUE_FALSE"
+        ? `Pernyataan benar: ${question.correctAnswers}`
+        : `Kunci jawaban: ${question.correctAnswers}`
       : null;
   }
 
@@ -73,10 +126,14 @@ export function ExercisePlayerClient({ exercise, initialAttempt }: ExercisePlaye
 
   const currentQuestion = questions[currentIndex];
   const options = buildOptions(currentQuestion);
+  const trueFalseStatements = buildTrueFalseStatements(currentQuestion);
   const selectedForCurrent = selectedAnswers[currentQuestion.id] ?? [];
+  const trueFalseSelection = parseTrueFalseSelection(selectedForCurrent);
   const progressWidth = `${Math.max(((currentIndex + 1) / Math.max(questions.length, 1)) * 100, 10)}%`;
-  const isMultipleChoice = currentQuestion.questionType === "MULTIPLE_CHOICE";
+  const isMultipleChoice =
+    currentQuestion.questionType === "MULTIPLE_CHOICE" || currentQuestion.questionType === "TRUE_FALSE";
   const isEssay = currentQuestion.questionType === "ESSAY";
+  const isTrueFalse = currentQuestion.questionType === "TRUE_FALSE";
   const answerKeySummary = buildAnswerKeySummary(currentQuestion);
   const hasSubmitted = Boolean(attemptResult);
   const resultForCurrent = attemptResult?.answers[currentQuestion.id] ?? null;
@@ -112,6 +169,26 @@ export function ExercisePlayerClient({ exercise, initialAttempt }: ExercisePlaye
       return {
         ...previous,
         [currentQuestion.id]: [optionKey],
+      };
+    });
+  }
+
+  function handleTrueFalseSelect(statementKey: string, decision: boolean) {
+    if (hasSubmitted) {
+      return;
+    }
+
+    setSelectedAnswers((previous) => {
+      const current = previous[currentQuestion.id] ?? [];
+
+      return {
+        ...previous,
+        [currentQuestion.id]: buildTrueFalseSelectionValues(
+          current,
+          statementKey,
+          decision,
+          trueFalseStatements.map((statement) => statement.key),
+        ),
       };
     });
   }
@@ -238,13 +315,19 @@ export function ExercisePlayerClient({ exercise, initialAttempt }: ExercisePlaye
                 <span className="rounded-full bg-[#eef4ff] px-3 py-1 text-[12px] font-bold text-[#2563eb]">
                   {isEssay
                     ? "Esai"
+                    : isTrueFalse
+                      ? "Benar / Salah"
                     : isMultipleChoice
                       ? "Pilihan ganda kompleks"
                       : "Pilihan ganda"}
                 </span>
               </div>
               {isMultipleChoice ? (
-                <p className="mt-2 text-[13px] font-semibold text-[#596983]">Pilih lebih dari satu jawaban bila diperlukan.</p>
+                <p className="mt-2 text-[13px] font-semibold text-[#596983]">
+                  {isTrueFalse
+                    ? "Pilih semua pernyataan yang benar."
+                    : "Pilih lebih dari satu jawaban bila diperlukan."}
+                </p>
               ) : null}
             </div>
           </div>
@@ -277,6 +360,81 @@ export function ExercisePlayerClient({ exercise, initialAttempt }: ExercisePlaye
               <p className="mt-3 text-[13px] leading-6 text-[#596983]">
                 Jawaban esai akan ikut tersimpan saat submit. Nilai esai belum dihitung otomatis.
               </p>
+            </div>
+          ) : isTrueFalse ? (
+            <div className="overflow-hidden rounded-[20px] border border-[#dce6f5] bg-white">
+              <div className="overflow-x-auto">
+                <table className="min-w-full border-collapse">
+                  <thead>
+                    <tr className="bg-[#f8fbff]">
+                      <th className="border-b border-r border-[#dce6f5] px-4 py-4 text-left text-[14px] font-bold text-[#1f2f46]">
+                        Pernyataan
+                      </th>
+                      <th className="border-b border-r border-[#dce6f5] px-4 py-4 text-center text-[14px] font-bold text-[#1f2f46]">
+                        Benar
+                      </th>
+                      <th className="border-b border-[#dce6f5] px-4 py-4 text-center text-[14px] font-bold text-[#1f2f46]">
+                        Salah
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {trueFalseStatements.map((statement) => {
+                      const rowSelection = trueFalseSelection[statement.key];
+                      const isTrueSelected = rowSelection === true;
+                      const isFalseSelected = rowSelection === false;
+
+                      return (
+                        <tr key={statement.key} className="align-top">
+                          <td className="border-b border-r border-[#dce6f5] px-4 py-4 text-[15px] text-[#1f2f46] last:border-b-0">
+                            <div className="flex gap-3">
+                              <span className="min-w-[28px] font-bold text-[#1f2f46]">{statement.key}.</span>
+                              <MathRichText
+                                text={statement.text}
+                                className="min-w-0 leading-7 [&_.katex]:text-[1em] [&_.katex-display]:my-3 [&_.katex-display]:overflow-x-auto"
+                              />
+                            </div>
+                          </td>
+                          <td className="border-b border-r border-[#dce6f5] px-3 py-3 text-center last:border-b-0">
+                            <button
+                              type="button"
+                              onClick={() => handleTrueFalseSelect(statement.key, true)}
+                              disabled={hasSubmitted}
+                              aria-pressed={isTrueSelected}
+                              className={cn(
+                                "mx-auto flex size-11 items-center justify-center rounded-[14px] border transition-all",
+                                isTrueSelected
+                                  ? "border-[#0f8a63] bg-[#e7f8f1] text-[#0f8a63] shadow-[0_14px_22px_-18px_rgba(15,138,99,0.7)]"
+                                  : "border-[#cfdaf0] bg-white text-[#94a3b8] hover:border-[#0f8a63] hover:text-[#0f8a63]",
+                                hasSubmitted && "cursor-not-allowed",
+                              )}
+                            >
+                              <CheckCircle2 className="size-5" />
+                            </button>
+                          </td>
+                          <td className="border-b border-[#dce6f5] px-3 py-3 text-center last:border-b-0">
+                            <button
+                              type="button"
+                              onClick={() => handleTrueFalseSelect(statement.key, false)}
+                              disabled={hasSubmitted}
+                              aria-pressed={isFalseSelected}
+                              className={cn(
+                                "mx-auto flex size-11 items-center justify-center rounded-[14px] border transition-all",
+                                isFalseSelected
+                                  ? "border-[#b7791f] bg-[#fff4e5] text-[#b7791f] shadow-[0_14px_22px_-18px_rgba(183,121,31,0.7)]"
+                                  : "border-[#cfdaf0] bg-white text-[#94a3b8] hover:border-[#b7791f] hover:text-[#b7791f]",
+                                hasSubmitted && "cursor-not-allowed",
+                              )}
+                            >
+                              <CheckCircle2 className="size-5" />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
           ) : (
             <div className="grid gap-4 md:grid-cols-2">

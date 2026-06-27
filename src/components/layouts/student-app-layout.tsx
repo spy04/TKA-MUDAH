@@ -23,7 +23,7 @@ export function StudentAppLayout({
   const avatarText = displayName.charAt(0).toUpperCase();
 
   return (
-    <main className="min-h-screen bg-[#eef3ff] text-[#1f2f46]">
+    <main className="min-h-screen bg-[linear-gradient(180deg,#eef3ff_0%,#f7faff_100%)] text-[#1f2f46]">
       <StudentTopbar avatarText={avatarText} />
 
       <div className="mx-auto flex w-full max-w-[1440px] gap-6 px-4 py-6 lg:px-6">

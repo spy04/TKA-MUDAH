@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { BookOpen, ClipboardCheck, Lock, PlayCircle } from "lucide-react";
+import { BookOpen, ClipboardCheck, PlayCircle } from "lucide-react";
 
 import { StudentAppLayout } from "@/components/layouts/student-app-layout";
 import { buildSidebarMenus } from "@/components/student-dashboard/data";
-import type { PublicTopicDetail } from "@/lib/public-content";
+import { buildExerciseCategorySlug, type PublicTopicDetail } from "@/lib/public-content";
 import { cn } from "@/lib/utils";
 
 type StudentTopicDetailViewProps = {
@@ -17,6 +17,12 @@ export function StudentTopicDetailView({
   displayName,
   logoutAction,
 }: StudentTopicDetailViewProps) {
+  const exerciseCategorySlug = buildExerciseCategorySlug(topic.category, topic.difficulty);
+  const topicExerciseCount = topic.exerciseSummary.totalTopicExercises;
+  const categoryExerciseCount = topic.exerciseSummary.totalCategoryExercises;
+  const topicPackageCount = topic.exerciseSummary.topicCount;
+  const materialExerciseCount = topic.exerciseSummary.materialCount;
+
   return (
     <StudentAppLayout
       displayName={displayName}
@@ -60,7 +66,7 @@ export function StudentTopicDetailView({
             </div>
             <div className="rounded-[18px] border border-[#e3eaf6] bg-white px-4 py-4">
               <p className="text-[12px] font-bold uppercase tracking-[0.2em] text-[#7b8aa3]">Latihan</p>
-              <p className="mt-2 text-[28px] font-black text-[#1f2f46]">{topic.exercises.length}</p>
+              <p className="mt-2 text-[28px] font-black text-[#1f2f46]">{topicExerciseCount}</p>
             </div>
           </div>
         </div>
@@ -107,7 +113,6 @@ export function StudentTopicDetailView({
                   </p>
 
                   <div className="mt-5 flex items-center gap-2 rounded-[16px] bg-[#f8fbff] px-4 py-3 text-[13px] font-medium text-[#596983]">
-                    <Lock className="size-4 shrink-0" />
                     {!hasFile
                       ? "File materi belum diupload admin."
                       : isPreview
@@ -143,84 +148,63 @@ export function StudentTopicDetailView({
           </div>
         )}
 
-        <div className="mt-10">
-          <div className="flex items-end justify-between gap-4">
-            <div>
-              <h2 className="text-[24px] font-black tracking-tight text-[#1f2f46]">Latihan Soal</h2>
+        <div className="mt-10 rounded-[24px] border border-[#d8e2f3] bg-white p-5 shadow-[0_16px_26px_-24px_rgba(15,23,42,0.35)] sm:p-6">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="max-w-[760px]">
+              <h2 className="text-[24px] font-black tracking-tight text-[#1f2f46]">
+                Latihan untuk topik ini
+              </h2>
               <p className="mt-2 text-[14px] leading-7 text-[#596983]">
-                Latihan preview bisa langsung kamu kerjakan dari akun siswa. Akses enrolled nanti dipakai untuk premium.
+                Latihan yang memang terhubung ke topik ini bisa kamu buka langsung dari sini. Untuk latihan umum per
+                kategori, tetap gunakan halaman latihan kategori.
               </p>
             </div>
-            <span className="rounded-full bg-[#eef4ff] px-3 py-2 text-[12px] font-bold text-[#2563eb]">
-              {topic.exercises.length} latihan
+            <span className="w-fit rounded-full bg-[#eef4ff] px-3 py-2 text-[12px] font-bold text-[#2563eb]">
+              {topicExerciseCount} latihan topik
             </span>
           </div>
 
-          {topic.exercises.length > 0 ? (
-            <div className="mt-6 grid gap-4 lg:grid-cols-2">
-              {topic.exercises.map((exercise) => {
-                const isPreview = exercise.accessLevel === "PREVIEW";
+          <div className="mt-5 grid gap-3 sm:grid-cols-3">
+            <div className="rounded-[18px] border border-[#e3eaf6] bg-[#f8fbff] px-4 py-4">
+              <p className="text-[12px] font-bold uppercase tracking-[0.2em] text-[#7b8aa3]">Latihan kategori</p>
+              <p className="mt-2 text-[28px] font-black text-[#1f2f46]">{categoryExerciseCount}</p>
+            </div>
+            <div className="rounded-[18px] border border-[#e3eaf6] bg-[#f8fbff] px-4 py-4">
+              <p className="text-[12px] font-bold uppercase tracking-[0.2em] text-[#7b8aa3]">Latihan topic</p>
+              <p className="mt-2 text-[28px] font-black text-[#1f2f46]">{topicPackageCount}</p>
+            </div>
+            <div className="rounded-[18px] border border-[#e3eaf6] bg-[#f8fbff] px-4 py-4">
+              <p className="text-[12px] font-bold uppercase tracking-[0.2em] text-[#7b8aa3]">Terkait materi</p>
+              <p className="mt-2 text-[28px] font-black text-[#1f2f46]">{materialExerciseCount}</p>
+            </div>
+          </div>
 
-                return (
-                  <article
-                    key={exercise.id}
-                    className="rounded-[20px] border border-[#e3eaf6] bg-white p-5 shadow-[0_16px_26px_-24px_rgba(15,23,42,0.35)]"
+          <div className="mt-6">
+            {topicExerciseCount > 0 || categoryExerciseCount > 0 ? (
+              <div className="flex flex-col gap-3 sm:flex-row">
+                {topicExerciseCount > 0 ? (
+                  <Link
+                    href={`/siswa/topik/${topic.slug}/latihan`}
+                    className="flex h-[46px] items-center justify-center rounded-[14px] bg-[#0f8a63] text-[14px] font-bold text-white sm:w-fit sm:px-6"
                   >
-                    <div className="flex items-start justify-between gap-4">
-                      <div
-                        className={cn(
-                          "flex size-12 items-center justify-center rounded-[14px]",
-                          isPreview ? "bg-[#eef4ff] text-[#2563eb]" : "bg-[#fff4e5] text-[#b7791f]",
-                        )}
-                      >
-                        <ClipboardCheck className="size-5" />
-                      </div>
-                      <span
-                        className={cn(
-                          "rounded-full px-3 py-1 text-[11px] font-bold",
-                          isPreview ? "bg-[#e8f0ff] text-[#2563eb]" : "bg-[#fff4e5] text-[#b7791f]",
-                        )}
-                      >
-                        {isPreview ? "Preview" : "Enrolled"}
-                      </span>
-                    </div>
-
-                    <h3 className="mt-4 text-[20px] font-black text-[#1f2f46]">{exercise.title}</h3>
-                    <p className="mt-2 text-[14px] leading-7 text-[#596983]">
-                      {exercise.questionCount} soal
-                      {exercise.materialTitle ? ` • terkait materi ${exercise.materialTitle}` : " • latihan topik langsung"}
-                    </p>
-
-                    <div className="mt-5 flex items-center gap-2 rounded-[16px] bg-[#f8fbff] px-4 py-3 text-[13px] font-medium text-[#596983]">
-                      <Lock className="size-4 shrink-0" />
-                      {isPreview
-                        ? "Bisa langsung dikerjakan dari akun siswa."
-                        : "Latihan ini aktif untuk akun premium."}
-                    </div>
-
-                    <div className="mt-5">
-                      {isPreview ? (
-                        <Link
-                          href={`/siswa/latihan/${exercise.id}`}
-                          className="flex h-[44px] items-center justify-center rounded-[12px] bg-[#0f8a63] text-[14px] font-bold text-white"
-                        >
-                          Buka Latihan
-                        </Link>
-                      ) : (
-                        <span className="flex h-[44px] items-center justify-center rounded-[12px] bg-[#eef2f8] text-[14px] font-bold text-[#94a3b8]">
-                          Upgrade untuk Buka
-                        </span>
-                      )}
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="mt-6 rounded-[20px] border border-dashed border-[#d8e2f3] bg-white px-6 py-8 text-[15px] leading-8 text-[#596983]">
-              Latihan untuk topik ini belum dipublish oleh admin.
-            </div>
-          )}
+                    Buka Latihan Topik Ini
+                  </Link>
+                ) : null}
+                {categoryExerciseCount > 0 ? (
+                  <Link
+                    href={`/siswa/latihan/kategori/${exerciseCategorySlug}`}
+                    className="flex h-[46px] items-center justify-center rounded-[14px] border border-[#cfe8de] bg-white text-[14px] font-bold text-[#0f8a63] sm:w-fit sm:px-6"
+                  >
+                    Buka Latihan Kategori
+                  </Link>
+                ) : null}
+              </div>
+            ) : (
+              <div className="rounded-[16px] bg-[#f8fbff] px-4 py-3 text-[14px] leading-7 text-[#596983]">
+                Latihan untuk topik ini maupun kategori terkait belum dipublish oleh admin.
+              </div>
+            )}
+          </div>
         </div>
       </section>
     </StudentAppLayout>

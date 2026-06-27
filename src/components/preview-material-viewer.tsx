@@ -18,6 +18,90 @@ type PreviewMaterialViewerProps = {
   fileUrl: string | null;
 };
 
+type ResolvedVideoSource =
+  | {
+      kind: "embed";
+      src: string;
+      provider: string;
+    }
+  | {
+      kind: "file";
+      src: string;
+    };
+
+function resolveYoutubeEmbedUrl(url: URL) {
+  const hostname = url.hostname.toLowerCase().replace(/^www\./, "");
+
+  if (hostname === "youtu.be") {
+    const videoId = url.pathname.split("/").filter(Boolean)[0];
+    return videoId ? `https://www.youtube.com/embed/${videoId}` : null;
+  }
+
+  if (!hostname.endsWith("youtube.com")) {
+    return null;
+  }
+
+  const videoIdFromQuery = url.searchParams.get("v");
+
+  if (videoIdFromQuery) {
+    return `https://www.youtube.com/embed/${videoIdFromQuery}`;
+  }
+
+  const pathSegments = url.pathname.split("/").filter(Boolean);
+  const embedIndex = pathSegments.findIndex((segment) => segment === "embed" || segment === "shorts");
+  const videoId = embedIndex >= 0 ? pathSegments[embedIndex + 1] : null;
+
+  return videoId ? `https://www.youtube.com/embed/${videoId}` : null;
+}
+
+function resolveGoogleDrivePreviewUrl(url: URL) {
+  const hostname = url.hostname.toLowerCase().replace(/^www\./, "");
+
+  if (hostname !== "drive.google.com" && hostname !== "docs.google.com") {
+    return null;
+  }
+
+  const pathMatch = url.pathname.match(/\/file\/d\/([^/]+)/i);
+  const fileId = pathMatch?.[1] || url.searchParams.get("id");
+
+  return fileId ? `https://drive.google.com/file/d/${fileId}/preview` : null;
+}
+
+function resolveVideoSource(fileUrl: string): ResolvedVideoSource {
+  try {
+    const url = new URL(fileUrl);
+    const youtubeEmbedUrl = resolveYoutubeEmbedUrl(url);
+
+    if (youtubeEmbedUrl) {
+      return {
+        kind: "embed",
+        src: youtubeEmbedUrl,
+        provider: "YouTube",
+      };
+    }
+
+    const drivePreviewUrl = resolveGoogleDrivePreviewUrl(url);
+
+    if (drivePreviewUrl) {
+      return {
+        kind: "embed",
+        src: drivePreviewUrl,
+        provider: "Google Drive",
+      };
+    }
+  } catch {
+    return {
+      kind: "file",
+      src: fileUrl,
+    };
+  }
+
+  return {
+    kind: "file",
+    src: fileUrl,
+  };
+}
+
 function useContainerWidth() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [width, setWidth] = useState(720);
@@ -83,19 +167,37 @@ export function PreviewMaterialViewer({
   }
 
   if (type === "VIDEO") {
+    const videoSource = resolveVideoSource(fileUrl);
+
     return (
       <div
         className="overflow-hidden rounded-[20px] border border-[#d8e2f3] bg-[#0f172a] shadow-[0_24px_44px_-30px_rgba(15,23,42,0.48)]"
         onContextMenu={handleContextMenu}
       >
-        <video
-          src={fileUrl}
-          controls
-          controlsList="nodownload noplaybackrate noremoteplayback"
-          disablePictureInPicture
-          className="aspect-video w-full bg-black"
-          onContextMenu={handleContextMenu}
-        />
+        {videoSource.kind === "embed" ? (
+          <div className="space-y-3 bg-[#0f172a] p-3">
+            <iframe
+              src={videoSource.src}
+              title={`${title} - ${videoSource.provider}`}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+              className="aspect-video w-full rounded-[16px] border border-white/10 bg-black"
+              referrerPolicy="strict-origin-when-cross-origin"
+            />
+            <div className="px-1 pb-1 text-sm text-slate-300">
+              Sumber video: {videoSource.provider}
+            </div>
+          </div>
+        ) : (
+          <video
+            src={videoSource.src}
+            controls
+            controlsList="nodownload noplaybackrate noremoteplayback"
+            disablePictureInPicture
+            className="aspect-video w-full bg-black"
+            onContextMenu={handleContextMenu}
+          />
+        )}
       </div>
     );
   }

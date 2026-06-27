@@ -39,6 +39,47 @@ function normalizeOptionValues(values: string[] | undefined) {
   return [...new Set(values.map((value) => value.trim().toUpperCase()).filter(Boolean))].sort();
 }
 
+function normalizeTrueFalseSelections(values: string[] | undefined, statementKeys: string[]) {
+  if (!values) {
+    return [];
+  }
+
+  const decisions = new Map<string, "TRUE" | "FALSE">();
+
+  for (const rawValue of values) {
+    const value = rawValue.trim().toUpperCase();
+
+    if (!value) {
+      continue;
+    }
+
+    if (value.includes(":")) {
+      const [key, decision] = value.split(":");
+
+      if (!key || (decision !== "TRUE" && decision !== "FALSE")) {
+        continue;
+      }
+
+      decisions.set(key, decision);
+      continue;
+    }
+
+    if (statementKeys.includes(value)) {
+      decisions.set(value, "TRUE");
+    }
+  }
+
+  return statementKeys
+    .filter((key) => decisions.has(key))
+    .map((key) => `${key}:${decisions.get(key)}`);
+}
+
+function buildExpectedTrueFalseSelections(correctAnswers: string | null, statementKeys: string[]) {
+  const trueKeys = normalizeOptionValues(correctAnswers?.split(","));
+
+  return statementKeys.map((key) => `${key}:${trueKeys.includes(key) ? "TRUE" : "FALSE"}`);
+}
+
 function parseStoredOptions(value: string | null) {
   if (!value?.trim()) {
     return [];
@@ -153,7 +194,27 @@ export async function submitExerciseAttempt(params: {
 
   const answerRows = exercise.questions.map((question) => {
     const incoming = answerMap.get(question.id);
-    const selectedOptions = normalizeOptionValues(incoming?.selectedOptions);
+    const statementKeys =
+      question.questionType === "TRUE_FALSE"
+        ? ["A", "B", "C", "D", "E"].filter((key) => {
+            const optionValue =
+              key === "A"
+                ? question.optionA
+                : key === "B"
+                  ? question.optionB
+                  : key === "C"
+                    ? question.optionC
+                    : key === "D"
+                      ? question.optionD
+                      : question.optionE;
+
+            return Boolean(optionValue?.trim());
+          })
+        : [];
+    const selectedOptions =
+      question.questionType === "TRUE_FALSE"
+        ? normalizeTrueFalseSelections(incoming?.selectedOptions, statementKeys)
+        : normalizeOptionValues(incoming?.selectedOptions);
     const essayAnswer = incoming?.essayAnswer?.trim() ?? "";
     const hasAnswer =
       question.questionType === "ESSAY" ? essayAnswer.length > 0 : selectedOptions.length > 0;
@@ -180,7 +241,13 @@ export async function submitExerciseAttempt(params: {
 
     let isCorrect = false;
 
-    if (question.questionType === "MULTIPLE_CHOICE") {
+    if (question.questionType === "TRUE_FALSE") {
+      const expected = buildExpectedTrueFalseSelections(question.correctAnswers, statementKeys);
+      isCorrect =
+        expected.length > 0 &&
+        expected.length === selectedOptions.length &&
+        expected.every((value, index) => value === selectedOptions[index]);
+    } else if (question.questionType === "MULTIPLE_CHOICE") {
       const expected = normalizeOptionValues(question.correctAnswers?.split(","));
       isCorrect =
         expected.length > 0 &&

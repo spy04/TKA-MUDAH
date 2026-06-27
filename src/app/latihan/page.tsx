@@ -1,13 +1,7 @@
-import { redirect } from "next/navigation";
-
-import { getFirstStudentExerciseId } from "@/lib/public-content";
+import { PublicExerciseCategoryListView } from "@/components/public-exercise-category-list-view";
+import { getPublicExerciseCategories } from "@/lib/public-content";
 
 export default async function LatihanLandingPage() {
-  const exerciseId = await getFirstStudentExerciseId();
-
-  if (!exerciseId) {
-    redirect("/masuk");
-  }
-
-  redirect(`/masuk?callbackUrl=${encodeURIComponent(`/siswa/latihan/${exerciseId}`)}`);
+  const categories = await getPublicExerciseCategories();
+  return <PublicExerciseCategoryListView categories={categories} />;
 }

@@ -33,6 +33,7 @@ export function StudentDashboardView({
   const sidebarMenus = buildSidebarMenus(homeHref);
   const topicHref = isEnrolled ? "/siswa/topik" : "/topik";
   const topicDetailBaseHref = isEnrolled ? "/siswa/topik" : "/topik";
+  const exerciseHref = isEnrolled ? "/siswa/latihan" : "/latihan";
 
   return (
     <main className="min-h-screen bg-[#eaf1ff] text-[#1f2f46]">
@@ -78,7 +79,7 @@ export function StudentDashboardView({
                       {isEnrolled ? "Lanjut Belajar" : "Daftar Sekarang"}
                     </Link>
                     <Link
-                      href={isEnrolled ? "#latihan" : "/masuk"}
+                      href={isEnrolled ? exerciseHref : "/masuk"}
                       className="flex h-[44px] items-center justify-center rounded-[12px] border-2 border-[#2563eb] px-8 text-[14px] font-bold text-[#2563eb]"
                     >
                       {isEnrolled ? "Coba Latihan" : "Sudah Punya Akun"}

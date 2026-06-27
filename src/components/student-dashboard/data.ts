@@ -171,11 +171,12 @@ export function buildHeaderMenus(
 
 export function buildSidebarMenus(homeHref: string, currentSection: DashboardSection = "dashboard"): SidebarItem[] {
   const topicHref = homeHref === "/siswa" ? "/siswa/topik" : "/topik";
+  const exerciseHref = homeHref === "/siswa" ? "/siswa/latihan" : "/latihan";
 
   return [
     { label: "Home", href: homeHref, icon: House, active: currentSection === "dashboard" },
     { label: "Materi Saya", href: topicHref, icon: BookOpen, active: currentSection === "topics" },
-    { label: "Tryout", href: "#simulasi", icon: ClipboardCheck, active: false },
+    { label: "Latihan", href: exerciseHref, icon: ClipboardCheck, active: currentSection === "exercises" },
     { label: "Statistik", href: "#statistik", icon: FileText, active: false },
     { label: "Pengaturan", href: "#pengaturan", icon: Settings, active: false },
   ];

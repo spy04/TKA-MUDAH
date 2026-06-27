@@ -1,11 +1,11 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 
 import { buildHeaderMenus, buildSidebarMenus } from "@/components/student-dashboard/data";
 import { ExercisePlayerClient } from "@/components/exercise-player-client";
 import { StudentFooter } from "@/components/student-dashboard/student-footer";
 import { StudentNavbar } from "@/components/student-dashboard/student-navbar";
 import { StudentSidebar } from "@/components/student-dashboard/student-sidebar";
-import type { PublicExerciseDetail } from "@/lib/public-content";
+import { buildExerciseCategorySlug, type PublicExerciseDetail } from "@/lib/public-content";
 
 type ExerciseDetailViewProps = {
   exercise: PublicExerciseDetail;
@@ -26,6 +26,7 @@ export function ExerciseDetailView({
   const exerciseHref = isEnrolled ? "/siswa/latihan" : "/latihan";
   const headerMenus = buildHeaderMenus(homeHref, "exercises", exerciseHref);
   const sidebarMenus = buildSidebarMenus(homeHref, "exercises");
+  const exerciseCategorySlug = buildExerciseCategorySlug(exercise.topic.category, exercise.topic.difficulty);
   const totalQuestions = Math.max(exercise.questions.length, exercise.questionCount, 0);
   const totalPoints = exercise.questions.reduce((sum, question) => sum + question.points, 0);
 
@@ -46,12 +47,25 @@ export function ExerciseDetailView({
 
           <div className="min-w-0 flex-1">
             <section className="rounded-[24px] border border-[#d8e2f3] bg-[#f7f9ff] px-6 py-7 shadow-[0_20px_42px_-36px_rgba(15,23,42,0.45)] lg:px-8">
-              <Link
-                href={isEnrolled ? `/siswa/topik/${exercise.topic.slug}` : `/topik/${exercise.topic.slug}`}
-                className="text-[14px] font-bold text-[#2563eb]"
-              >
-                Kembali ke topik {exercise.topic.title}
-              </Link>
+              <div className="flex flex-wrap items-center gap-3 text-[14px] font-bold">
+                <Link
+                  href={
+                    isEnrolled
+                      ? `/siswa/latihan/kategori/${exerciseCategorySlug}`
+                      : `/latihan/kategori/${exerciseCategorySlug}`
+                  }
+                  className="text-[#2563eb]"
+                >
+                  Kembali ke {exercise.topic.category} - {exercise.topic.difficulty}
+                </Link>
+                <span className="text-[#b7c2d6]">/</span>
+                <Link
+                  href={isEnrolled ? `/siswa/topik/${exercise.topic.slug}` : `/topik/${exercise.topic.slug}`}
+                  className="text-[#7b8aa3]"
+                >
+                  Lihat topik {exercise.topic.title}
+                </Link>
+              </div>
 
               <div className="mt-4">
                 <h1 className="text-[34px] font-black tracking-tight text-[#1f2f46] lg:text-[42px]">
@@ -88,4 +102,3 @@ export function ExerciseDetailView({
     </main>
   );
 }
-
