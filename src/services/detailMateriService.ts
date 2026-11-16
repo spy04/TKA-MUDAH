@@ -34,6 +34,8 @@ export type DetailMateriData = {
   preview: {
     available: boolean
     videoUrl: string | null
+    durationSeconds: number
+    restricted: boolean
   }
   outcomes: {
     title: string
@@ -101,6 +103,9 @@ export async function getDetailMateri(slug: string): Promise<DetailMateriData> {
   })
 
   const accessFree = item.accessTier === 'FREE'
+  const previewLesson = item.chapters
+    .flatMap((chapter) => chapter.lessons)
+    .find((lesson) => Boolean(lesson.videoUrl))
   return {
     slug: item.slug,
     subject: item.subject.name,
@@ -112,8 +117,10 @@ export async function getDetailMateri(slug: string): Promise<DetailMateriData> {
     category: item.category || item.subject.name,
     imageUrl: item.imageUrl ?? '',
     preview: {
-      available: false,
-      videoUrl: null,
+      available: Boolean(previewLesson),
+      videoUrl: previewLesson?.videoUrl ?? null,
+      durationSeconds: previewLesson?.durationSeconds ?? 0,
+      restricted: item.accessTier === 'PREMIUM',
     },
     outcomes: item.outcomes.map((outcome) => ({
       title: outcome.title,

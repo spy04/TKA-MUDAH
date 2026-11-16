@@ -1,6 +1,8 @@
 
+import { useState } from 'react'
 import { BookOpen, Play } from 'lucide-react'
 
+import LessonPlayer from '../../belajar/LessonPlayer'
 import type { DetailMateriData } from '../../../services/detailMateriService'
 
 type VideoPreviewProps = {
@@ -14,12 +16,33 @@ export default function VideoPreview({
   shortTitle,
   preview,
 }: VideoPreviewProps) {
+  const [started, setStarted] = useState(false)
   const canPlay = preview.available && Boolean(preview.videoUrl)
+
+  if (started && canPlay) {
+    return (
+      <LessonPlayer
+        key={preview.videoUrl}
+        data={{
+          lessonId: 'material-preview',
+          lessonTitle: shortTitle,
+          lessonLabel: shortTitle,
+          courseLabel: 'Cuplikan materi',
+          posterUrl: imageUrl,
+          videoUrl: preview.videoUrl,
+          initialPosition: 0,
+          duration: preview.durationSeconds,
+        }}
+        preview={preview.restricted}
+        onPositionChange={() => {}}
+      />
+    )
+  }
 
   return (
     <section className="group relative aspect-video w-full overflow-hidden rounded-xl bg-brand shadow-md">
       <img
-        src={imageUrl}
+        src={imageUrl || undefined}
         alt={`Ilustrasi ${shortTitle}`}
         className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
       />
@@ -35,11 +58,10 @@ export default function VideoPreview({
 
       <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
         {canPlay ? (
-          <a
-            href={preview.videoUrl!}
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            type="button"
             aria-label="Tonton Cuplikan Video"
+            onClick={() => setStarted(true)}
             className="mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-white text-brand shadow-xl transition-transform duration-300 group-hover:scale-110"
           >
             <Play
@@ -47,7 +69,7 @@ export default function VideoPreview({
               fill="currentColor"
               className="translate-x-0.5 text-brand-secondary"
             />
-          </a>
+          </button>
         ) : (
           <button
             type="button"
