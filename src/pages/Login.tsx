@@ -44,8 +44,8 @@ export default function Login() {
 
   return (
     <AuthShell
-      title="Selamat datang kembali"
-      description="Masuk ke akunmu untuk melanjutkan progres belajar."
+      title="Selamat datang di TKA Mudah"
+      description=""
       footer={
         <>
           Belum punya akun?{' '}

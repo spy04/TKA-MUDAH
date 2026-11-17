@@ -11,17 +11,17 @@ export default function Footer() {
           <div className="flex items-center gap-2">
             <img
               src={logo}
-              alt="Logo BinaSiswa"
+              alt="Logo TKA Mudah"
               className="h-8 w-auto object-contain"
             />
 
             <span className="font-heading text-base font-semibold text-brand">
-              BinaSiswa
+              TKA Mudah
             </span>
           </div>
 
           <p className="text-xs text-foreground-muted">
-            © {new Date().getFullYear()} BinaSiswa. Hak cipta dilindungi.
+            © {new Date().getFullYear()} TKA Mudah. Hak cipta dilindungi.
           </p>
         </div>
 

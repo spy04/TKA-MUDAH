@@ -96,7 +96,7 @@ export default function Header({ activePage = "/" }: HeaderProps) {
         <Link to="/" className="flex shrink-0 items-center gap-2">
           <img
             src={logo}
-            alt="Logo BinaSiswa"
+            alt="Logo TKA Mudah"
             className="h-9 w-auto object-contain"
           />
 

@@ -278,7 +278,7 @@ export default function Beranda() {
             </h2>
 
             <p className="mt-1 text-xs text-home-muted">
-              Materi yang dipublikasikan di katalog BinaSiswa
+              Materi yang dipublikasikan di katalog TKA Mudah.
             </p>
           </div>
 

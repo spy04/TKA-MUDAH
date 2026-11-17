@@ -14,6 +14,7 @@ import HasilLatihan from './pages/HasilLatihan'
 import LatihanSoal from './pages/LatihanSoal'
 import Login from './pages/Login'
 import Register from './pages/Register'
+import LandingPage from "./pages/LandingPage";
 
 function protectedLayout(
   activePage: string,
@@ -31,10 +32,12 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <Routes>
-          <Route
-            path="/"
-            element={protectedLayout('/', <Beranda />)}
-          />
+          <Route path="/" element={<LandingPage />} />
+
+<Route
+  path="/beranda"
+  element={protectedLayout('/beranda', <Beranda />)}
+/>
           <Route
             path="/dashboard"
             element={protectedLayout('', <DashboardSiswa />)}

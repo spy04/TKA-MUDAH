@@ -74,7 +74,7 @@ export default function Register() {
   return (
     <AuthShell
       title="Buat akun siswa"
-      description="Lengkapi data berikut untuk memulai ruang belajar personalmu."
+      description=""
       footer={
         <>
           Sudah memiliki akun?{' '}
