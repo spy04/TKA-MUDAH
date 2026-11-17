@@ -28,7 +28,7 @@ function field(
 export async function getLandingMaterials():
   Promise<LandingMaterial[]> {
 
-  const response = await fetch(`${API_URL}/materials`);
+  const response = await fetch(`${API_URL}/materials?isLanding=true&pageSize=12`);
 
   if (!response.ok) {
     throw new Error("Gagal mengambil katalog materi");
