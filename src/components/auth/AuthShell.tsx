@@ -1,4 +1,4 @@
-import { GraduationCap, ShieldCheck, Sparkles } from 'lucide-react'
+import { Sparkles } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { logo } from '../../assets'
 

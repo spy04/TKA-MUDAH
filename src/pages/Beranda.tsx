@@ -19,7 +19,7 @@ import LearningCard from '../components/beranda/LearningCard'
 import FeaturedCard from '../components/beranda/FeaturedCard'
 import GradeSelector from '../components/beranda/GradeSelector'
 import QuickActionCard from '../components/beranda/QuickActionCard'
-
+import BerandaSkeleton from '../components/beranda/BerandaSkeleton'
 import {
   getBerandaData,
   type BerandaData,
@@ -116,15 +116,8 @@ export default function Beranda() {
   ===================================== */
 
   if (loading) {
-    return (
-      <div
-        role="status"
-        className="mx-auto max-w-7xl px-4 py-12 text-sm text-home-muted"
-      >
-        Memuat beranda...
-      </div>
-    )
-  }
+  return <BerandaSkeleton />
+}
 
   if (error || !data) {
     return (

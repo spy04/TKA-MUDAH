@@ -11,7 +11,7 @@ import {
 import {
   apiGet,
   apiLogout,
-  restoreAccessToken,
+  restoreStoredAccessToken,
   setAccessToken,
   subscribeSessionExpired,
 } from '../api/client'
@@ -49,9 +49,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(null)
     })
 
-    void restoreAccessToken()
-      .then(() => apiGet<ApiUser>('/me'))
-      .then(setUser)
+    const token = restoreStoredAccessToken()
+    const restoreSession = token
+      ? apiGet<ApiUser>('/me').then(setUser)
+      : Promise.resolve()
+
+    void restoreSession
       .catch(() => {
         setAccessToken(null)
         setUser(null)

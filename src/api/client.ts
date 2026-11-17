@@ -21,10 +21,9 @@ type ApiEnvelope<T> = {
   data: T
 }
 
-type ApiRequestOptions = Omit<RequestInit, 'body' | 'headers'> & {
+type ApiRequestOptions = Omit<RequestInit, 'body' | 'headers' | 'credentials'> & {
   body?: unknown
   headers?: HeadersInit
-  retryOnUnauthorized?: boolean
 }
 
 const apiBaseUrl = (
@@ -32,13 +31,24 @@ const apiBaseUrl = (
 ).replace(/\/+$/, '')
 
 let accessToken: string | null = null
-let refreshInFlight: Promise<string> | null = null
+const accessTokenStorageKey = 'binasiswa.accessToken'
 const accessTokenListeners = new Set<(token: string | null) => void>()
 const sessionExpiredListeners = new Set<() => void>()
 
 export function setAccessToken(token: string | null) {
   accessToken = token
+  if (token) {
+    sessionStorage.setItem(accessTokenStorageKey, token)
+  } else {
+    sessionStorage.removeItem(accessTokenStorageKey)
+  }
   accessTokenListeners.forEach((listener) => listener(token))
+}
+
+export function restoreStoredAccessToken(): string | null {
+  const token = sessionStorage.getItem(accessTokenStorageKey)
+  accessToken = token || null
+  return accessToken
 }
 
 export function subscribeAccessToken(
@@ -81,55 +91,11 @@ async function readError(response: Response): Promise<ApiError> {
   )
 }
 
-async function refreshAccessToken(): Promise<string> {
-  if (!refreshInFlight) {
-    refreshInFlight = (async () => {
-      let response: Response
-      try {
-        response = await fetch(`${apiBaseUrl}/auth/refresh`, {
-          method: 'POST',
-          credentials: 'include',
-          headers: { Accept: 'application/json' },
-        })
-      } catch {
-        throw new ApiError(0, 'NETWORK_ERROR', 'Tidak dapat terhubung ke server.')
-      }
-
-      if (!response.ok) {
-        throw await readError(response)
-      }
-
-      const envelope = (await response.json()) as ApiEnvelope<{
-        accessToken: string
-      }>
-      if (!envelope.data?.accessToken) {
-        throw new ApiError(
-          500,
-          'INVALID_RESPONSE',
-          'Server memberikan respons autentikasi yang tidak valid.'
-        )
-      }
-      setAccessToken(envelope.data.accessToken)
-      return envelope.data.accessToken
-    })().finally(() => {
-      refreshInFlight = null
-    })
-  }
-
-  return refreshInFlight
-}
-
 async function request<T>(
   path: string,
-  options: ApiRequestOptions = {},
-  retry = true
+  options: ApiRequestOptions = {}
 ): Promise<T> {
-  const {
-    body,
-    headers: inputHeaders,
-    retryOnUnauthorized = true,
-    ...requestOptions
-  } = options
+  const { body, headers: inputHeaders, ...requestOptions } = options
   const headers = new Headers(inputHeaders)
   headers.set('Accept', 'application/json')
   if (body !== undefined && !(body instanceof FormData)) {
@@ -144,7 +110,6 @@ async function request<T>(
     response = await fetch(`${apiBaseUrl}${path}`, {
       ...requestOptions,
       headers,
-      credentials: 'include',
       body:
         body === undefined
           ? undefined
@@ -156,21 +121,9 @@ async function request<T>(
     throw new ApiError(0, 'NETWORK_ERROR', 'Tidak dapat terhubung ke server.')
   }
 
-  if (
-    response.status === 401 &&
-    accessToken &&
-    retry &&
-    retryOnUnauthorized &&
-    !path.startsWith('/auth/')
-  ) {
-    try {
-      await refreshAccessToken()
-      return request<T>(path, options, false)
-    } catch {
-      setAccessToken(null)
-      sessionExpiredListeners.forEach((listener) => listener())
-      throw new ApiError(401, 'UNAUTHENTICATED', 'Sesi telah berakhir. Silakan masuk kembali.')
-    }
+  if (response.status === 401 && accessToken) {
+    setAccessToken(null)
+    sessionExpiredListeners.forEach((listener) => listener())
   }
 
   if (!response.ok) {
@@ -189,13 +142,11 @@ export async function apiGet<T>(path: string): Promise<T> {
 
 export async function apiPost<T>(
   path: string,
-  body?: unknown,
-  options: Pick<ApiRequestOptions, 'retryOnUnauthorized'> = {}
+  body?: unknown
 ): Promise<T> {
   const envelope = await request<ApiEnvelope<T>>(path, {
     method: 'POST',
     body,
-    ...options,
   })
   return envelope.data
 }
@@ -213,13 +164,6 @@ export async function apiDelete(path: string): Promise<void> {
 }
 
 export async function apiLogout(): Promise<void> {
-  await request<void>('/auth/logout', {
-    method: 'POST',
-    retryOnUnauthorized: false,
-  })
-}
-
-export async function restoreAccessToken(): Promise<string> {
-  return refreshAccessToken()
+  await request<void>('/auth/logout', { method: 'POST' })
 }
 

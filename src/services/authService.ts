@@ -15,8 +15,7 @@ export async function login(
 ): Promise<ApiUser> {
   const result = await apiPost<AuthResult>(
     '/auth/login',
-    { email, password },
-    { retryOnUnauthorized: false }
+    { email, password }
   )
   setAccessToken(result.accessToken)
   return result.user ?? apiGet<ApiUser>('/me')
@@ -27,8 +26,7 @@ export async function register(
 ): Promise<ApiUser> {
   const result = await apiPost<AuthResult>(
     '/auth/register',
-    input,
-    { retryOnUnauthorized: false }
+    input
   )
   setAccessToken(result.accessToken)
   return result.user ?? apiGet<ApiUser>('/me')
